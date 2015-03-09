@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Simple Canvas Based HTML5 Color-Picker">
+    <meta name="keywords" content="HTML,CSS,JavaScript">
+    <meta name="author" content="Ciacco Davide">
+    <style>
+      body {background: #222; margin: 0px; padding: 0px; font-family: "Arial Black", Gadget, sans-serif;}
+      canvas{border: 3px double #39d;}
+      #output{color: #ddd; text-align: center; width: 276px;}
+    </style>
+  </head>
+  <body>
+    <canvas id="picker" width="276" height="340"></canvas>
+    <div id="output"></div>
+    <script>
+      function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+      }
+      function drawPickedColor(canvas, color, imageObj, colorhex) {
+        var width = 255, height = 60;
+        var padding = 10;
+        var context = canvas.getContext('2d');
+        var squareX = padding;
+        var squareY = imageObj.height + padding + 4;
+
+        context.beginPath();
+        context.fillStyle = color;
+        context.fillRect(squareX, squareY, width, height);
+        context.strokeRect(squareX, squareY, width, height);
+
+        document.getElementById('picker').style.borderColor = color;
+        document.getElementById('output').innerHTML = color + '<br>' + colorhex.toUpperCase();
+      }
+      function init(imageObj) {
+        var padding = 10;
+        var canvas = document.getElementById('picker');
+        var context = canvas.getContext('2d');
+        var mouseDown = false;
+
+        context.strokeStyle = '#111';
+        context.lineWidth = 1;
+
+        canvas.addEventListener('mousedown', function() {
+          mouseDown = true;
+        }, false);
+
+        canvas.addEventListener('mouseup', function() {
+          mouseDown = false;
+        }, false);
+
+        canvas.addEventListener('mousemove', function(evt) {
+          var mousePos = getMousePos(canvas, evt);
+          var color = undefined;
+
+          if(mouseDown && mousePos !== null && mousePos.x > padding && mousePos.x < padding + imageObj.width && mousePos.y > padding && mousePos.y < padding + imageObj.height) {
+            var imageData = context.getImageData(padding, padding, imageObj.width, imageObj.width);
+            var data = imageData.data;
+            var x = mousePos.x - padding;
+            var y = mousePos.y - padding;
+            var red = data[((imageObj.width * y) + x) * 4];
+            var green = data[((imageObj.width * y) + x) * 4 + 1];
+            var blue = data[((imageObj.width * y) + x) * 4 + 2];
+            var color = 'rgb(' + red + ',' + green + ',' + blue + ')';
+
+            var colorhex = '#' + twoDigitHex(red.toString(16))+ twoDigitHex(green.toString(16))+ twoDigitHex(blue.toString(16));
+            drawPickedColor(canvas, color, imageObj, colorhex);
+          }
+        }, false);
+
+        context.beginPath();
+        context.strokeRect(padding-1, padding-1, imageObj.width+2, imageObj.height+2);
+
+        context.drawImage(imageObj, padding, padding);
+        drawPickedColor(canvas, 'white', imageObj, colorhex);
+      }
+      var imageObj = new Image();
+      imageObj.onload = function() {
+        init(this);
+      };
+      imageObj.src = './color-picker.png';
+      function twoDigitHex(hex) {
+        if(hex.length == 2)
+          return hex;
+        else
+          return '0' + hex;
+      }
+    </script>
+  </body>
+</html>
